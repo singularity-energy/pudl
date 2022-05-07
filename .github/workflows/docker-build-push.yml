@@ -2,7 +2,7 @@ name: docker-build-push
 on:
   push:
     branches:
-      - gce-deploy # for testing purposes
+      - redeploy-test # for testing purposes
 
 env:
   PROJECT_ID: ${{ secrets.GCE_PROJECT }}
