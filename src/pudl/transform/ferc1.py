@@ -242,8 +242,8 @@ class Ferc1AbstractTableTransformer(AbstractTableTransformer):
             instant,
             duration,
             how="outer",
-            left_on=["date", "entity_id", "ReportYear"] + instant_axes,
-            right_on=["end_date", "entity_id", "ReportYear"] + duration_axes,
+            left_on=["date", "entity_id", "report_year"] + instant_axes,
+            right_on=["end_date", "entity_id", "report_year"] + duration_axes,
             validate="1:1",
         )
 
@@ -270,7 +270,7 @@ class Ferc1AbstractTableTransformer(AbstractTableTransformer):
         else:
             assert source_ferc1 == Ferc1Source.XBRL  # nosec: B101
             cols = self.params.rename_columns_ferc1.xbrl.columns
-            pk_cols = ["ReportYear", "entity_id"]
+            pk_cols = ["report_year", "entity_id"]
             # Sort to avoid dependence on the ordering of rename_columns.
             # Doing the sorting here because we have a particular ordering
             # hard coded for the DBF primary keys.
