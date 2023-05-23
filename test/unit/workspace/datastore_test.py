@@ -32,6 +32,24 @@ class TestDatapackageDescriptor(unittest.TestCase):
             },
         ]
     }
+    RED = PudlResourceKey(
+        "epacems",
+        "123",
+        "first-red",
+        partition={"color": "red", "order": 1},
+    )
+    BLUE = PudlResourceKey(
+        "epacems",
+        "123",
+        "second-blue",
+        partition={"color": "blue", "order": 2},
+    )
+    MIXED = PudlResourceKey(
+        "epacems",
+        "123",
+        "mixed-case",
+        partition={"upper": "UPPER", "lower": "lower", "mixed": "miXED"},
+    )
 
     def setUp(self):
         """Builds DatapackageDescriptor based on MOCK_DATAPACKAGE."""
@@ -56,37 +74,34 @@ class TestDatapackageDescriptor(unittest.TestCase):
 
     def test_get_resources_filtering(self):
         """Verifies correct operation of get_resources()."""
-        self.assertEqual(
-            [
-                PudlResourceKey("epacems", "123", "first-red"),
-                PudlResourceKey("epacems", "123", "second-blue"),
-                PudlResourceKey("epacems", "123", "mixed-case"),
-            ],
+        self.assertListEqual(
+            [self.RED, self.BLUE, self.MIXED],
             list(self.descriptor.get_resources()),
         )
-        self.assertEqual(
-            [PudlResourceKey("epacems", "123", "first-red")],
-            list(self.descriptor.get_resources(color="red")),
+        self.assertListEqual(
+            [self.RED], list(self.descriptor.get_resources(color="red"))
         )
-        self.assertEqual([], list(self.descriptor.get_resources(flavor="blueberry")))
+        self.assertListEqual(
+            [], list(self.descriptor.get_resources(flavor="blueberry"))
+        )
 
     def test_get_resources_filtering_case_insensitive(self):
         """Verifies that values for the parts are treated case-insensitive."""
-        self.assertEqual(
-            [PudlResourceKey("epacems", "123", "mixed-case")],
+        self.assertListEqual(
+            [self.MIXED],
             list(self.descriptor.get_resources(upper="uppeR")),
         )
-        self.assertEqual(
-            [PudlResourceKey("epacems", "123", "mixed-case")],
+        self.assertListEqual(
+            [self.MIXED],
             list(self.descriptor.get_resources(upper="uppeR", lower="Lower")),
         )
         # Lookups are, however, case-sensitive for the keys.
-        self.assertEqual([], list(self.descriptor.get_resources(Upper="UPPER")))
+        self.assertListEqual([], list(self.descriptor.get_resources(Upper="UPPER")))
 
     def test_get_resources_by_name(self):
         """Verifies that get_resources() work when name is specified."""
-        self.assertEqual(
-            [PudlResourceKey("epacems", "123", "second-blue")],
+        self.assertListEqual(
+            [self.BLUE],
             list(self.descriptor.get_resources(name="second-blue")),
         )
 

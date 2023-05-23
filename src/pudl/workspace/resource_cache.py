@@ -46,7 +46,7 @@ class PudlResourceKey(NamedTuple):
 
     def __repr__(self) -> str:
         """Returns string representation of PudlResourceKey."""
-        return f"Resource({self.dataset}/{self.doi}/{self.name})"
+        return f"Resource({self.dataset}/{self.doi}/{self.name}){self.partition}"
 
     def get_local_path(self) -> Path:
         """Returns (relative) path that should be used when caching this resource."""
