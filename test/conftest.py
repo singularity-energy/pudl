@@ -212,6 +212,9 @@ def ferc_to_sqlite_xbrl_only(live_dbs, pudl_datastore_config, etl_settings):
                         "config": pudl_datastore_config,
                     },
                 },
+                "ops": {
+                    "workers": 2,
+                },
             },
         )
 
@@ -238,6 +241,9 @@ def ferc_to_sqlite(live_dbs, pudl_datastore_config, etl_settings):
                     "datastore": {
                         "config": pudl_datastore_config,
                     },
+                },
+                "ops": {
+                    "workers": 2,
                 },
             },
         )
