@@ -328,7 +328,7 @@ def vs_bounds(
     if bool(hi_q) ^ hi_bool:
         raise ValueError(
             f"You must supply both a lower quantile and lower bound, "
-            f"or neither. Got: low_q={hi_q}, low_bound={hi_bound} "
+            f"or neither. Got: hi_q={hi_q}, hi_bound={hi_bound} "
             f"for validation entitled {title}"
         )
 

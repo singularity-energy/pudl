@@ -24,6 +24,10 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler, Normalizer, OneHotEncoder
 
 import pudl
+from pudl.entity_matching.blocking import (
+    ColumnEmbedding,
+    DataframeEmbedder,
+)
 
 logger = pudl.logging_helpers.get_logger(__name__)
 
@@ -386,6 +390,49 @@ def make_ferc1_clf(
 
 
 def plants_steam_assign_plant_ids(
+    ferc1_steam_df: pd.DataFrame,
+    ferc1_fuel_df: pd.DataFrame,
+    fuel_categories: list[str],
+) -> pd.DataFrame:
+    """Assign IDs to the large steam plants."""
+    ###########################################################################
+    # FERC PLANT ID ASSIGNMENT
+    ###########################################################################
+    # Now we need to assign IDs to the large steam plants, since FERC doesn't
+    # do this for us.
+    logger.info("Identifying distinct large FERC plants for ID assignment.")
+
+    # scikit-learn still doesn't deal well with NA values (this will be fixed
+    # eventually) We need to massage the type and missing data for the
+    # Classifier to work.
+    ferc1_steam_df = pudl.helpers.fix_int_na(
+        ferc1_steam_df, columns=["construction_year"]
+    )
+
+    # Grab fuel consumption proportions for use in assigning plant IDs:
+    fuel_fractions = fuel_by_plant_ferc1(ferc1_fuel_df, fuel_categories)
+    ffc = list(fuel_fractions.filter(regex=".*_fraction_mmbtu$").columns)
+
+    ferc1_steam_df = ferc1_steam_df.merge(
+        fuel_fractions[["utility_id_ferc1", "plant_name_ferc1", "report_year"] + ffc],
+        on=["utility_id_ferc1", "plant_name_ferc1", "report_year"],
+        how="left",
+    )
+
+    fuel_cols = list(ferc1_steam_df.filter(regex=".*_fraction_mmbtu$").columns)
+    embedding_map = {
+        "plant_name": ColumnEmbedding(embedding_type="tfidf_vectorize"),
+        "plant_type": ColumnEmbedding(embedding_type="tfidf_vectorize"),
+        "construction_type": ColumnEmbedding(embedding_type="tfidf_vectorize"),
+        "capacity_mw": ColumnEmbedding(embedding_type="min_max_scale"),
+        "construction_year": ColumnEmbedding(embedding_type="min_max_scale"),
+        **{col: ColumnEmbedding(embedding_type="min_max_scale") for col in fuel_cols},
+    }
+
+    DataframeEmbedder(ferc1_steam_df, embedding_map)
+
+
+def plants_steam_assign_plant_ids_old(
     ferc1_steam_df: pd.DataFrame,
     ferc1_fuel_df: pd.DataFrame,
     fuel_categories: list[str],

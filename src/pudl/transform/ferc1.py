@@ -25,7 +25,7 @@ from pydantic import validator
 
 import pudl
 from pudl.analysis.classify_plants_ferc1 import (
-    plants_steam_assign_plant_ids,
+    plants_steam_assign_plant_ids_old,
     plants_steam_validate_ids,
 )
 from pudl.extract.ferc1 import TABLE_NAME_MAP_FERC1
@@ -2777,7 +2777,7 @@ class PlantsSteamFerc1TableTransformer(Ferc1AbstractTableTransformer):
             super()
             .transform_main(df)
             .pipe(
-                plants_steam_assign_plant_ids,
+                plants_steam_assign_plant_ids_old,
                 ferc1_fuel_df=transformed_fuel,
                 fuel_categories=fuel_categories,
             )
