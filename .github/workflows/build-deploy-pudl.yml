@@ -74,7 +74,7 @@ jobs:
           labels: ${{ steps.docker_metadata.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: x86/64
+          platforms: linux/amd64
 
       - id: "auth"
         uses: "google-github-actions/auth@v2"
