@@ -22,6 +22,10 @@ from pudl import ferc_to_sqlite
 from pudl.helpers import get_dagster_execution_config
 from pudl.settings import EtlSettings
 
+import faulthandler
+
+faulthandler.enable()
+
 # Create a logger to output any messages we might have...
 logger = pudl.logging_helpers.get_logger(__name__)
 
