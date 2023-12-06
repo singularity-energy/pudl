@@ -4660,10 +4660,10 @@ package:
     dependencies:
       python: ">=3.11,<3.12.0a0"
       python_abi: 3.11.*
-    url: https://conda.anaconda.org/conda-forge/osx-64/docutils-0.20.1-py311h6eed73b_2.conda
+    url: https://conda.anaconda.org/conda-forge/osx-64/docutils-0.20.1-py311h6eed73b_3.conda
     hash:
-      md5: d56b49f1a2c908d05d1ca6b3f85d0fd5
-      sha256: 869e919066b308794e399bc551fc508c175da5f9324b7a324eb259cef8adabf2
+      md5: 2919376c4957faadc7b96f8894759bfb
+      sha256: 0fae62e203900a8a013ba2ede852645b87b1568980ddd8e11390c11dc24c3e3c
     category: main
     optional: false
   - name: docutils
