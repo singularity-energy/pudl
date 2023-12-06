@@ -8,7 +8,7 @@ SHELL [ "/bin/bash", "-exo", "pipefail", "-c" ]
 # awscli requires unzip, less, groff and mandoc
 # hadolint ignore=DL3008
 RUN apt-get update && \
-    apt-get install --no-install-recommends -y git jq unzip less groff mandoc python3-dbg gdb && \
+    apt-get install --no-install-recommends -y less mandoc python3-dbg gdb && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
