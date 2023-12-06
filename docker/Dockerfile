@@ -8,7 +8,7 @@ SHELL [ "/bin/bash", "-exo", "pipefail", "-c" ]
 # awscli requires unzip, less, groff and mandoc
 # hadolint ignore=DL3008
 RUN apt-get update && \
-    apt-get install --no-install-recommends -y less mandoc python3-dbg gdb && \
+    apt-get install --no-install-recommends -y less mandoc python3-dbg gdb sudo && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -57,7 +57,7 @@ RUN --mount=type=bind,source=.git,target=${PUDL_REPO}/.git \
 # Change back to root because the install script needs access to /usr/local/aws-cli
 USER root
 RUN ${CONDA_RUN} bash -c 'curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && unzip awscliv2.zip && ./aws/install'
-USER $MAMBA_USER
+# USER $MAMBA_USER
 
 # Install flyctl
 # hadolint ignore=DL3059
