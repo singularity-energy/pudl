@@ -849,13 +849,27 @@ def identify_retiring_generators(gen_assoc: pd.DataFrame) -> pd.DataFrame:
     report generator-specific generation data in the g table after their retirement
     date.
     """
-    retiring_generators = gen_assoc.loc[
+    # identify the complete set of generator ids that match this criteria
+    retiring_generator_identities = gen_assoc.loc[
         (gen_assoc.operational_status == "retired")
         & (
             (gen_assoc.report_date <= gen_assoc.generator_retirement_date)
             | (gen_assoc.net_generation_mwh_g_tbl.notnull())
-        )
-    ]
+        ),
+        ["plant_id_eia", "generator_id"],
+    ].drop_duplicates()
+
+    # merge these ids into gen_assoc and keep all months of data for these gens
+    retiring_generators = gen_assoc.copy().merge(
+        retiring_generator_identities,
+        how="outer",
+        on=["plant_id_eia", "generator_id"],
+        indicator="_retiring_gens",
+    )
+
+    retiring_generators = retiring_generators[
+        retiring_generators["_retiring_gens"] == "both"
+    ].drop(columns="_retiring_gens")
 
     return retiring_generators
 
@@ -1309,7 +1323,8 @@ def allocate_gen_fuel_by_gen_esc(gen_pm_fuel: pd.DataFrame) -> pd.DataFrame:
         net_gen_alloc.assign(
             # we could x.net_generation_mwh_g_tbl.fillna here if we wanted to
             # take the net gen
-            net_generation_mwh=lambda x: x.net_generation_mwh_gf_tbl * x.frac,
+            net_generation_mwh=lambda x: x.net_generation_mwh_gf_tbl
+            * x.frac,
         )
         .pipe(apply_pudl_dtypes, group="eia")
         .dropna(how="all")
