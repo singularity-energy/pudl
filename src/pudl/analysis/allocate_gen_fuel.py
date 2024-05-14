@@ -1527,99 +1527,105 @@ def distribute_annually_reported_data_to_months_if_annual(
     Returns:
         df with the annually reported values allocated to each month
     """
-    if freq == "MS":
+    # for years prior to 2008, some of the dataframes are blank, so we want to skip this
+    # logic for those years to avoid various errors.
+    if len(df) > 0:
+        if freq == "MS":
 
-        def assign_plant_year(df):
-            return df.assign(
-                plant_year=lambda x: x.report_date.dt.year.astype(str)
-                + "_"
-                + x.plant_id_eia.astype(str)
-            )
-
-        reporters = df.copy().pipe(assign_plant_year)
-        # get a count of the number of missing values in a year
-        key_columns_annual = ["plant_year"] + [
-            col for col in key_columns if col != "report_date"
-        ]
-        reporters["missing_data"] = (
-            reporters.assign(
-                missing_data=lambda x: x[data_column_name].isnull()
-                | np.isclose(reporters[data_column_name], 0)
-            )
-            .groupby(key_columns_annual, dropna=False)[["missing_data"]]
-            .transform("sum")
-        )
-
-        # seperate annual and monthly reporters
-        once_a_year_reporters = reporters[
-            (
-                reporters[data_column_name].notnull()
-                & ~np.isclose(reporters[data_column_name], 0)
-            )
-            & (reporters.missing_data == 11)
-        ]
-        annual_reporters = once_a_year_reporters[
-            once_a_year_reporters.report_date.dt.month.isin([1, 12])
-        ].set_index(["plant_year"])
-
-        # check if the plurality of the once_a_year_reporters are in Jan or Dec
-        perc_of_annual = len(annual_reporters) / len(once_a_year_reporters)
-        if perc_of_annual < 0.40:
-            logger.warning(
-                f"Less than 40% ({perc_of_annual:.0%}) of the once-a-year reporters "
-                "are in January or December. Examine assumption about annual reporters."
-            )
-
-        reporters = reporters.set_index(["plant_year"])
-        monthly_reporters = reporters.loc[
-            reporters.index.difference(annual_reporters.index)
-        ]
-
-        logger.info(
-            f"Distributing {len(annual_reporters)/len(reporters):.1%} annually reported"
-            " records to months."
-        )
-        # first convert the december month to january bc expand_timeseries expands from
-        # the start date and we want january on.
-        annual_reporters_expanded = (
-            annual_reporters.assign(
-                report_date=lambda x: pd.to_datetime(
-                    {
-                        "year": x.report_date.dt.year,
-                        "month": 1,
-                        "day": 1,
-                    },
+            def assign_plant_year(df):
+                return df.assign(
+                    plant_year=lambda x: x.report_date.dt.year.astype(str)
+                    + "_"
+                    + x.plant_id_eia.astype(str)
                 )
-            )
-            .pipe(
-                pudl.helpers.expand_timeseries,
-                key_cols=[col for col in key_columns if col != "report_date"],
-                date_col="report_date",
-                fill_through_freq="year",
-            )
-            .assign(**{data_column_name: lambda x: x[data_column_name] / 12})
-            .pipe(assign_plant_year)
-            .pipe(apply_pudl_dtypes, group="eia")
-            .set_index(["plant_year"])
-        )
-        # sometimes a plant oscillates btwn annual and monthly reporting. when it does
-        # expand_timeseries will generate monthly records for years that were not
-        # included annual_reporters bc expand_timeseries expands from the most recent
-        # to the last date... so we remove any plant/year combo that didn't show up
-        # before the expansion
-        annual_reporters_expanded = annual_reporters_expanded.loc[
-            annual_reporters_expanded.index.intersection(annual_reporters.index)
-        ]
 
-        df_out = (
-            pd.concat([monthly_reporters, annual_reporters_expanded])
-            .reset_index(drop=True)
-            .drop(columns=["missing_data"])
-        )
-    elif freq == "AS":
-        df_out = df
+            reporters = df.copy().pipe(assign_plant_year)
+            # get a count of the number of missing values in a year
+            key_columns_annual = ["plant_year"] + [
+                col for col in key_columns if col != "report_date"
+            ]
+            reporters["missing_data"] = (
+                reporters.assign(
+                    missing_data=lambda x: x[data_column_name].isnull()
+                    | np.isclose(reporters[data_column_name], 0)
+                )
+                .groupby(key_columns_annual, dropna=False)[["missing_data"]]
+                .transform("sum")
+            )
+
+            # seperate annual and monthly reporters
+            once_a_year_reporters = reporters[
+                (
+                    reporters[data_column_name].notnull()
+                    & ~np.isclose(reporters[data_column_name], 0)
+                )
+                & (reporters.missing_data == 11)
+            ]
+            annual_reporters = once_a_year_reporters[
+                once_a_year_reporters.report_date.dt.month.isin([1, 12])
+            ].set_index(["plant_year"])
+
+            # check if the plurality of the once_a_year_reporters are in Jan or Dec
+            perc_of_annual = len(annual_reporters) / len(once_a_year_reporters)
+            if perc_of_annual < 0.40:
+                logger.warning(
+                    f"Less than 40% ({perc_of_annual:.0%}) of the once-a-year reporters "
+                    "are in January or December. Examine assumption about annual reporters."
+                )
+
+
+            reporters = reporters.set_index(["plant_year"])
+            monthly_reporters = reporters.loc[
+                reporters.index.difference(annual_reporters.index)
+            ]
+
+            logger.info(
+                f"Distributing {len(annual_reporters)/len(reporters):.1%} annually reported"
+                " records to months."
+            )
+            # first convert the december month to january bc expand_timeseries expands from
+            # the start date and we want january on.
+            annual_reporters_expanded = (
+                annual_reporters.assign(
+                    report_date=lambda x: pd.to_datetime(
+                        {
+                            "year": x.report_date.dt.year,
+                            "month": 1,
+                            "day": 1,
+                        },
+                    )
+                )
+                .pipe(
+                    pudl.helpers.expand_timeseries,
+                    key_cols=[col for col in key_columns if col != "report_date"],
+                    date_col="report_date",
+                    fill_through_freq="year",
+                )
+                .assign(**{data_column_name: lambda x: x[data_column_name] / 12})
+                .pipe(assign_plant_year)
+                .pipe(apply_pudl_dtypes, group="eia")
+                .set_index(["plant_year"])
+            )
+            # sometimes a plant oscillates btwn annual and monthly reporting. when it does
+            # expand_timeseries will generate monthly records for years that were not
+            # included annual_reporters bc expand_timeseries expands from the most recent
+            # to the last date... so we remove any plant/year combo that didn't show up
+            # before the expansion
+            annual_reporters_expanded = annual_reporters_expanded.loc[
+                annual_reporters_expanded.index.intersection(annual_reporters.index)
+            ]
+
+            df_out = (
+                pd.concat([monthly_reporters, annual_reporters_expanded])
+                .reset_index(drop=True)
+                .drop(columns=["missing_data"])
+            )
+        elif freq == "AS":
+            df_out = df
+        else:
+            raise AssertionError(f"Frequency must be either `AS` or `MS`. Got {freq}")
     else:
-        raise AssertionError(f"Frequency must be either `AS` or `MS`. Got {freq}")
+        df_out = df
     return df_out
 
 
