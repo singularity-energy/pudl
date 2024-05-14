@@ -837,7 +837,7 @@ def remove_inactive_generators(gen_assoc: pd.DataFrame) -> pd.DataFrame:
             proposed_plants,
             unassociated_plants,
         ]
-    ).drop_duplciates(keep="first")
+    )
 
     return gen_assoc_removed
 
@@ -1323,7 +1323,8 @@ def allocate_gen_fuel_by_gen_esc(gen_pm_fuel: pd.DataFrame) -> pd.DataFrame:
         net_gen_alloc.assign(
             # we could x.net_generation_mwh_g_tbl.fillna here if we wanted to
             # take the net gen
-            net_generation_mwh=lambda x: x.net_generation_mwh_gf_tbl * x.frac,
+            net_generation_mwh=lambda x: x.net_generation_mwh_gf_tbl
+            * x.frac,
         )
         .pipe(apply_pudl_dtypes, group="eia")
         .dropna(how="all")
