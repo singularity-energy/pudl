@@ -1604,22 +1604,24 @@ def distribute_annually_reported_data_to_months_if_annual(
         ].set_index(["plant_year"])
 
         # check if the plurality of the once_a_year_reporters are in Jan or Dec
-        perc_of_annual = len(annual_reporters) / len(once_a_year_reporters)
-        if perc_of_annual < 0.40:
-            logger.warning(
-                f"Less than 40% ({perc_of_annual:.0%}) of the once-a-year reporters "
-                "are in January or December. Examine assumption about annual reporters."
-            )
+        if len(once_a_year_reporters) > 0:
+            perc_of_annual = len(annual_reporters) / len(once_a_year_reporters)
+            if perc_of_annual < 0.40:
+                logger.warning(
+                    f"Less than 40% ({perc_of_annual:.0%}) of the once-a-year reporters "
+                    "are in January or December. Examine assumption about annual reporters."
+                )
 
         reporters = reporters.set_index(["plant_year"])
         monthly_reporters = reporters.loc[
             reporters.index.difference(annual_reporters.index)
         ]
 
-        logger.info(
-            f"Distributing {len(annual_reporters) / len(reporters):.1%} annually reported"
-            " records to months."
-        )
+        if len(reporters) > 0:
+            logger.info(
+                f"Distributing {len(annual_reporters) / len(reporters):.1%} annually reported"
+                " records to months."
+            )
         # first convert the december month to january bc expand_timeseries expands from
         # the start date and we want january on.
         annual_reporters_expanded = (
