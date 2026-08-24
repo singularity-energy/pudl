@@ -34,6 +34,32 @@ Bug Fixes & Data Cleaning
   the full multi-year input rather than per year, so a plant with mixed statuses across
   its history would never pass the check for *any* of its years. Thanks to
   :user:`grgmiller` for this contribution. See :issue:`5440` and :pr:`5419`.
+* Fixed the same multi-year status bug in the sibling function
+  ``allocate_gen_fuel.identify_retired_plants()``, found while reviewing the
+  ``identify_proposed_plants()`` fix above. A plant that is entirely ``retired`` in
+  one year but has ``existing`` generators reported at the same ``plant_id_eia`` in
+  another year (e.g. a repowered or rebuilt site) never passed the "entirely retired"
+  check for *any* of its years, silently dropping legitimate retired-but-reporting
+  generation and fuel data. See :issue:`5440` and :pr:`5419`.
+* Unified the retiring/retired and coming-online/proposed generator and plant
+  detection logic in ``allocate_gen_fuel.py`` into two shared helper functions
+  (``_identify_transitioning_generators`` and
+  ``_identify_entirely_transitioned_plants``), so the "generator retiring" and
+  "generator coming online" cases -- previously two independently hand-maintained,
+  supposedly mirror-image implementations -- can no longer silently drift out of
+  sync with each other. Also plumbed the actual, confirmed ``generator_operating_date``
+  into the allocation pipeline (mirroring the existing use of
+  ``generator_retirement_date``), enabling ``identify_generators_coming_online()`` to
+  recognize a generator that's already operating mid-year even before it has any
+  reported generation or fuel data, and ``identify_proposed_plants()`` to detect a
+  proposed plant reporting generation anomalously before its confirmed operating
+  date, mirroring ``identify_retired_plants()``'s post-retirement anomaly check.
+  A null transition date (``generator_operating_date`` or
+  ``generator_retirement_date``) is treated as unable to disprove an anomaly, since
+  most ``proposed`` generators never acquire a ``generator_operating_date`` until
+  they actually start operating; requiring a known date would have silently
+  excluded the majority of legitimately still-proposed generators. See
+  :issue:`5440` and :pr:`5419`.
 
 Developer Experience
 ^^^^^^^^^^^^^^^^^^^^
